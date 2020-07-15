@@ -203,6 +203,7 @@ public class SpringBootDocBuildTemplate implements IDocBuildTemplate<ApiDoc> {
         Map<String, String> replacementMap = configBuilder.getReplaceClassMap();
         Map<String, String> pathParamsMap = new LinkedHashMap<>();
         Map<String, String> paramsComments = DocUtil.getParamsComments(method, DocTags.PARAM, null);
+        Map<String, String> ignoreParamsMap = DocUtil.getParamsComments(method, DocTags.IGNORE_PARAM, null);
         List<String> springMvcRequestAnnotations = SpringMvcRequestAnnotationsEnum.listSpringMvcRequestAnnotations();
         List<FormData> formDataList = new ArrayList<>();
         ApiRequestExample requestExample = ApiRequestExample.builder();
@@ -226,6 +227,9 @@ public class SpringBootDocBuildTemplate implements IDocBuildTemplate<ApiDoc> {
                 typeName = DocClassUtil.getSimpleName(rewriteClassName);
             }
             if (JavaClassValidateUtil.isMvcIgnoreParams(typeName)) {
+                continue;
+            }
+            if (ignoreParamsMap.containsKey(paramName)) {
                 continue;
             }
             String simpleTypeName = javaType.getValue().toLowerCase();
@@ -414,6 +418,7 @@ public class SpringBootDocBuildTemplate implements IDocBuildTemplate<ApiDoc> {
         Map<String, String> replacementMap = builder.getReplaceClassMap();
         String className = javaMethod.getDeclaringClass().getCanonicalName();
         Map<String, String> paramTagMap = DocUtil.getParamsComments(javaMethod, tagName, className);
+        Map<String, String> ignoreParamsTagMap = DocUtil.getParamsComments(javaMethod, DocTags.IGNORE_PARAM, className);
         List<JavaParameter> parameterList = javaMethod.getParameters();
         if (parameterList.size() < 1) {
             return null;
@@ -426,13 +431,14 @@ public class SpringBootDocBuildTemplate implements IDocBuildTemplate<ApiDoc> {
         out:
         for (JavaParameter parameter : parameterList) {
             String paramName = parameter.getName();
-            if (jsonParamSet.size() > 0 && !jsonParamSet.contains(paramName)) {
+            if (jsonParamSet.size() > 0 && !jsonParamSet.contains(paramName)
+                    || (ignoreParamsTagMap.containsKey(paramName))) {
                 continue;
             }
             String typeName = parameter.getType().getGenericCanonicalName();
             String simpleName = parameter.getType().getValue().toLowerCase();
             String fullTypeName = parameter.getType().getFullyQualifiedName();
-            String rewriteClassName = null;
+            String rewriteClassName;
             String commentClass = paramTagMap.get(paramName);
             if (Objects.nonNull(commentClass) && !DocGlobalConstants.NO_COMMENTS_FOUND.equals(commentClass)) {
                 String[] comments = commentClass.split("\\|");

@@ -54,4 +54,12 @@ public interface DocTags {
      * custom @api tag
      */
     String REST_API = "restApi";
+
+    /**
+     * custom ignoreParam tag
+     *
+     * @since 1.8.9+
+     */
+    String IGNORE_PARAM = "ignoreParam";
+
 }
